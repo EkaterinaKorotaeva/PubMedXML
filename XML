@@ -82,10 +82,6 @@ public class XML {
         }
     }
 
-    // This exception block catches all the exception
-    // raised.
-    // For example if we try to access a element by a
-    // TagName that is not there in the XML etc.
         catch (Exception e) {
         System.out.println(e);
     }
