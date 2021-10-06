@@ -1,0 +1,95 @@
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.http.HttpClient;
+
+public class XML {
+    public static void main(String argv[]){
+        try {
+            File file = new File("/Users/katya/Desktop/PubMed/4020a1-datasets.xml");
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(file);
+            doc.getDocumentElement().normalize();
+            System.out.println("Root element: " + doc.getDocumentElement().getNodeName());
+            NodeList nodeList = doc.getElementsByTagName("PubmedArticle");
+            HttpClient client = HttpClient.newHttpClient();
+            String url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=";
+            String field="&field=Title";
+            String apiKey="&api_key=fc57aa739fc5e8fd792bc604a03af428f608";
+        // Iterate through all the nodes in NodeList
+        // using for loop.
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node node = nodeList.item(i);
+            if (node.getNodeType()
+                    == Node.ELEMENT_NODE) {
+                Element tElement = (Element)node;
+                String articleTitle=tElement.getElementsByTagName("ArticleTitle").item(0).getTextContent();
+                System.out.println("ArticleTitle: "+articleTitle);
+                // System.out.println(articleAuthor);
+                String title=articleTitle.replaceAll("%","%25")
+                        .replaceAll("\\s","%20")
+                        .replaceAll("[.]","")
+                        .replaceAll("[?]","%3F")
+                        .replaceAll("[:]","%3A")
+                      //  .replaceAll("and","")
+                        .replaceAll("\"","%22")
+                        .replaceAll("[,]","%2C")
+                       // .replaceAll("the","")
+                       // .replaceAll("of","")
+                      //  .replaceAll("between","")
+                       // .replaceAll("in","")
+                        .replaceAll("[{]","%7B")
+                        .replaceAll("[}]","%7D");
+
+                String URL=url+title+field+apiKey;
+                System.out.println(URL);
+                try{
+                    URL obj = new URL(URL);
+                    HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                    int responseCode = con.getResponseCode();
+                    BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+                    String inputLine;
+                    StringBuffer response2 = new StringBuffer();
+                    while ((inputLine = in.readLine()) != null) {
+                        response2.append(inputLine);
+                }
+                    in.close();
+                System.out.println(response2.toString());
+                Document doc3 = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                        .parse(new InputSource(new StringReader(response2.toString())));
+                NodeList errNodes = doc3.getElementsByTagName("eSearchResult");
+                if (errNodes.getLength() > 0) {
+                    Element err = (Element)errNodes.item(0);
+                    System.out.println("Id "+err.getElementsByTagName("Id").item(0).getTextContent());}
+                else {
+                    // success
+                }
+}
+             catch (Exception e) {
+                System.out.println(e);
+            }
+
+            }
+        }
+    }
+
+    // This exception block catches all the exception
+    // raised.
+    // For example if we try to access a element by a
+    // TagName that is not there in the XML etc.
+        catch (Exception e) {
+        System.out.println(e);
+    }
+
+
+        }
+    }
